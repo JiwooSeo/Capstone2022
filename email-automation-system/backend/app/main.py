@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.config import get_settings
+from app.routes import auth, emails, events
 import logging
 
 settings = get_settings()
@@ -15,8 +16,12 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.scheduler.scheduler import start_scheduler
     logger.info("Application startup")
+    scheduler = start_scheduler()
     yield
+    if scheduler.running:
+        scheduler.shutdown()
     logger.info("Application shutdown")
 
 
@@ -34,6 +39,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
+app.include_router(emails.router)
+app.include_router(events.router)
 
 
 @app.get("/health")
