@@ -37,9 +37,10 @@ services:
     environment:
       - DATABASE_URL=postgresql://email_user:email_password@postgres:5432/email_automation
       - REDIS_URL=redis://redis:6379
-      - DEBUG=False
+      - DEBUG=True
+      - ENVIRONMENT=development
     ports:
-      - "8000:8000"
+      - "0.0.0.0:8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,6 +49,8 @@ services:
     volumes:
       - ./backend:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - email-automation-network
 
   frontend:
     build:
@@ -55,13 +58,15 @@ services:
       dockerfile: Dockerfile
     container_name: email-automation-frontend
     ports:
-      - "3000:3000"
+      - "0.0.0.0:3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_API_URL=${FRONTEND_API_URL:-http://localhost:8000/api}
     depends_on:
       - backend
     volumes:
       - ./frontend:/app
+    networks:
+      - email-automation-network
 
 volumes:
   postgres_data:

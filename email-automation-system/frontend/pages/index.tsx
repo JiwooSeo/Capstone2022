@@ -9,6 +9,16 @@ export default function Home() {
     setIsLoggedIn(!!token)
   }, [])
 
+  const handleGoogleLogin = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/google-oauth`)
+      const data = await response.json()
+      window.location.href = data.auth_url
+    } catch (error) {
+      console.error('Failed to start OAuth:', error)
+    }
+  }
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -20,12 +30,12 @@ export default function Home() {
             Intelligent email scheduling and task management powered by AI
           </p>
 
-          <a
-            href={`${process.env.NEXT_PUBLIC_API_URL}/google-oauth`}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition mb-4 block text-center"
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition mb-4"
           >
             Sign in with Google
-          </a>
+          </button>
 
           <div className="text-gray-600 text-sm">
             <h3 className="font-semibold mb-2">Features:</h3>

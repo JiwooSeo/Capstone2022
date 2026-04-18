@@ -123,6 +123,41 @@ async def get_current_user_info(
     return UserResponse.from_orm(current_user)
 
 
+@router.get("/google-oauth")
+async def start_google_oauth():
+    """Start Google OAuth flow."""
+    try:
+        from google_auth_oauthlib.flow import Flow
+
+        flow = Flow.from_client_config(
+            {
+                "installed": {
+                    "client_id": settings.gmail_client_id,
+                    "client_secret": settings.gmail_client_secret,
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "redirect_uris": [settings.gmail_redirect_uri],
+                }
+            },
+            scopes=GmailService.SCOPES,
+        )
+        flow.redirect_uri = settings.gmail_redirect_uri
+
+        auth_url, state = flow.authorization_url(
+            access_type="offline",
+            include_granted_scopes="true",
+            prompt="consent",
+        )
+
+        return {"auth_url": auth_url, "state": state}
+    except Exception as e:
+        logger.error(f"Failed to generate auth URL: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start OAuth flow",
+        )
+
+
 @router.post("/logout")
 async def logout(current_user: User = Depends(get_current_user)):
     """Logout user (client-side token deletion)."""
